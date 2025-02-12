@@ -1,0 +1,3 @@
+requests-html
+streamlink
+lxml_html_clean
