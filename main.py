@@ -112,11 +112,6 @@ def record_live_stream(stream_url):
                     process.kill()
                     break
 
-                # 超时终止
-                if time.time() - start_time > timeout:
-                    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 录制超时（>{timeout // 60} 分钟），终止进程")
-                    process.kill()
-                    break
 
         monitor_thread = threading.Thread(target=monitor_streamlink, args=(process,))
         monitor_thread.start()
