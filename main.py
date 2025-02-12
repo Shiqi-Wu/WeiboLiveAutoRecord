@@ -1,28 +1,33 @@
 import subprocess
 import time
 import threading
+import json
+import os
 from requests_html import HTMLSession
 from datetime import datetime, timezone, timedelta
 import sys
+
+# 解决 Unicode 输出问题
 sys.stdout.reconfigure(encoding='utf-8')
-import json
 
-# 微博账号的 UID
-uid = '2565158051'
+# 读取配置文件
+CONFIG_FILE = "config.json"
 
-# 检查间隔（秒）
-check_interval = 180
+def load_config():
+    """从 config.json 读取配置"""
+    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134',
-    'Referer': 'https://weibo.com/'
-}
+config = load_config()
 
-cookies = {
-    'SUB': '微博Cookie的SUB信息',
-    'SUBP': '微博Cookie的SUBP信息',
-}
+# 从配置文件加载参数
+uid = config["uid"]
+cookies = config["cookies"]
+check_interval = config["check_interval"]
+save_dir = config["save_dir"]
 
+# 确保保存目录存在
+os.makedirs(save_dir, exist_ok=True)
 
 # 微博 API 地址
 api_url = f'https://weibo.com/ajax/statuses/mymblog?uid={uid}'
@@ -36,8 +41,6 @@ def check_weibo_live(api_url, cookies):
     global session  
     try:
         response = session.get(api_url, cookies=cookies)
-        
-        # 确保编码为 UTF-8
         response.encoding = 'utf-8'
         
         print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] API 状态码: {response.status_code}")
@@ -85,7 +88,7 @@ def is_recent(date_str):
 def record_live_stream(stream_url):
     """使用 Streamlink 录制直播流"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_filename = f"{uid}-{timestamp}.mp4"
+    output_filename = os.path.join(save_dir, f"{uid}-{timestamp}.mp4")
 
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 开始录制: {output_filename}")
 
@@ -96,9 +99,6 @@ def record_live_stream(stream_url):
 
         def monitor_streamlink(process):
             """监控 streamlink 进程，确保不会卡住"""
-            timeout = 60 * 5  # 超时 5 分钟（可调节）
-            start_time = time.time()
-
             while True:
                 line = process.stderr.readline()
                 if not line:
@@ -111,7 +111,6 @@ def record_live_stream(stream_url):
                     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 直播结束或出错，停止录制")
                     process.kill()
                     break
-
 
         monitor_thread = threading.Thread(target=monitor_streamlink, args=(process,))
         monitor_thread.start()
