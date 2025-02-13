@@ -1,8 +1,9 @@
 {
     "uid": "2565158051",
+    "name": "孙亦航",
     "cookies": {
-        "SUB": "微博Cookie的SUB信息",
-        "SUBP": "微博Cookie的SUBP信息"
+        "SUB": "weibo cookies SUB",
+        "SUBP": "weibo cookies SUBP",
     },
     "check_interval": 180,
     "save_dir": "recordings"
